@@ -1,324 +1,840 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <meta name="apple-mobile-web-app-capable" content="yes" />
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-  <meta name="apple-mobile-web-app-title" content="AI Scout" />
-  <title>AI Research Scout</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.2/babel.min.js"></script>
-  <style>
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    html, body, #root { height: 100%; }
-    body {
-      background: #0a0a0f;
-      color: #e2e8f0;
-      font-family: 'Syne', system-ui, sans-serif;
-      -webkit-font-smoothing: antialiased;
-      overscroll-behavior: none;
-    }
-    ::-webkit-scrollbar { width: 4px; }
-    ::-webkit-scrollbar-track { background: #0a0a0f; }
-    ::-webkit-scrollbar-thumb { background: #2d2d44; border-radius: 2px; }
-    @keyframes pulse-dot { 0%,100%{opacity:1} 50%{opacity:0.2} }
-    @keyframes fadeUp { from{opacity:0;transform:translateY(16px)} to{opacity:1;transform:translateY(0)} }
-    @keyframes spin { to{transform:rotate(360deg)} }
-    .topic-chip { transition: all 0.18s ease; cursor: pointer; user-select: none; -webkit-tap-highlight-color: transparent; }
-    .topic-chip:active { transform: scale(0.96); }
-    .result-card { animation: fadeUp 0.4s ease both; }
-    .run-btn { transition: all 0.2s ease; -webkit-tap-highlight-color: transparent; }
-    .run-btn:active:not(:disabled) { transform: scale(0.98); }
-    input { -webkit-appearance: none; }
-    input:focus { outline: none; border-color: #6366f1 !important; }
-  </style>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0,viewport-fit=cover"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+<meta name="apple-mobile-web-app-title" content="AI Scout Pro"/>
+<title>AI Scout Pro</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet"/>
+<style>
+:root{
+  --bg:#08080f; --surface:#10101c; --surface2:#17172a; --border:#1e1e35;
+  --text:#e8eaff; --muted:#4a4a6a; --muted2:#2a2a45;
+  --c-trends:#00e5ff; --c-packages:#76ff03; --c-courses:#ff6d00;
+  --c-articles:#e040fb; --c-jobs:#ffeb3b;
+  --radius:14px; --tab-h:72px;
+  --safe-top:env(safe-area-inset-top,0px);
+  --safe-bot:env(safe-area-inset-bottom,0px);
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Outfit',system-ui,sans-serif;overscroll-behavior:none;-webkit-font-smoothing:antialiased;}
+::-webkit-scrollbar{width:3px;height:3px}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:4px}
+
+/* ─── Layout ─── */
+#app{display:flex;flex-direction:column;height:100vh;height:100dvh;}
+#header{flex-shrink:0;background:var(--surface);border-bottom:1px solid var(--border);padding:calc(var(--safe-top) + 12px) 16px 12px;z-index:100;}
+#content{flex:1;overflow-y:auto;overflow-x:hidden;padding-bottom:calc(var(--tab-h) + var(--safe-bot) + 8px);}
+#tabbar{position:fixed;bottom:0;left:0;right:0;height:calc(var(--tab-h) + var(--safe-bot));background:var(--surface);border-top:1px solid var(--border);display:flex;align-items:flex-start;padding-top:8px;z-index:200;}
+
+/* ─── Header ─── */
+.hdr-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;}
+.logo{display:flex;align-items:center;gap:8px;}
+.logo-dot{width:9px;height:9px;border-radius:50%;background:var(--c-trends);box-shadow:0 0 10px var(--c-trends);animation:pulse 2s infinite;}
+.logo-text{font-size:17px;font-weight:800;letter-spacing:-.03em;}
+.logo-text span{color:var(--c-trends);}
+.setup-btn{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:7px 12px;color:var(--muted);font-family:'JetBrains Mono',monospace;font-size:11px;cursor:pointer;letter-spacing:.05em;}
+.setup-btn.active{border-color:var(--c-trends);color:var(--c-trends);}
+
+/* ─── Setup panel ─── */
+#setup-panel{background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius);padding:16px;margin-bottom:4px;display:none;}
+#setup-panel.open{display:block;}
+.prov-tabs{display:flex;gap:6px;margin-bottom:12px;}
+.prov-tab{flex:1;padding:9px 0;border-radius:9px;border:1px solid var(--border);background:transparent;color:var(--muted);font-family:'Outfit',sans-serif;font-weight:700;font-size:13px;cursor:pointer;transition:.2s;}
+.prov-tab.active-claude{border-color:var(--c-trends);background:rgba(0,229,255,.1);color:var(--c-trends);}
+.prov-tab.active-openai{border-color:var(--c-packages);background:rgba(118,255,3,.1);color:var(--c-packages);}
+.key-label{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--muted);letter-spacing:.1em;text-transform:uppercase;margin-bottom:6px;display:block;}
+.key-input{width:100%;background:#0a0a15;border:1px solid var(--border);border-radius:8px;padding:11px 14px;color:var(--text);font-family:'JetBrains Mono',monospace;font-size:13px;outline:none;transition:.2s;}
+.key-input:focus{border-color:var(--c-trends);}
+.key-hint{font-size:11px;color:var(--muted);margin-top:6px;line-height:1.5;}
+.save-btn{margin-top:12px;width:100%;padding:11px;background:rgba(0,229,255,.12);border:1px solid var(--c-trends);border-radius:9px;color:var(--c-trends);font-family:'Outfit',sans-serif;font-weight:700;font-size:13px;cursor:pointer;}
+
+/* ─── Tab Bar ─── */
+.tab-item{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;padding:4px 0;cursor:pointer;transition:.2s;opacity:.4;border:none;background:none;}
+.tab-item.active{opacity:1;}
+.tab-icon{font-size:20px;line-height:1;}
+.tab-label{font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.06em;text-transform:uppercase;}
+.tab-item[data-tab="trends"].active .tab-label{color:var(--c-trends);}
+.tab-item[data-tab="packages"].active .tab-label{color:var(--c-packages);}
+.tab-item[data-tab="courses"].active .tab-label{color:var(--c-courses);}
+.tab-item[data-tab="articles"].active .tab-label{color:var(--c-articles);}
+.tab-item[data-tab="jobs"].active .tab-label{color:var(--c-jobs);}
+
+/* ─── Section Wrapper ─── */
+.section{display:none;padding:16px;}
+.section.active{display:block;}
+.section-hdr{margin-bottom:16px;}
+.section-title{font-size:22px;font-weight:800;letter-spacing:-.04em;margin-bottom:4px;}
+.section-sub{font-size:12px;color:var(--muted);font-family:'JetBrains Mono',monospace;}
+
+/* ─── Search Bar ─── */
+.search-row{display:flex;gap:8px;margin-bottom:14px;}
+.search-wrap{flex:1;position:relative;}
+.search-input{width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:11px;padding:12px 44px 12px 14px;color:var(--text);font-family:'Outfit',sans-serif;font-size:14px;outline:none;transition:.2s;}
+.search-input:focus{border-color:var(--c-trends);}
+.search-input::placeholder{color:var(--muted);}
+.search-add-btn{position:absolute;right:8px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--muted);font-size:18px;cursor:pointer;padding:4px;}
+.run-btn{padding:12px 16px;background:linear-gradient(135deg,#00e5ff,#0094a3);border:none;border-radius:11px;color:#000;font-family:'Outfit',sans-serif;font-weight:800;font-size:13px;cursor:pointer;white-space:nowrap;transition:.2s;display:flex;align-items:center;gap:6px;}
+.run-btn:disabled{background:var(--surface2);color:var(--muted);cursor:not-allowed;}
+.run-btn.pkg{background:linear-gradient(135deg,#76ff03,#4a9900);}
+.run-btn.crs{background:linear-gradient(135deg,#ff6d00,#a33b00);}
+.run-btn.art{background:linear-gradient(135deg,#e040fb,#8000a0);}
+.run-btn.job{background:linear-gradient(135deg,#ffeb3b,#c7a800);color:#000;}
+
+/* ─── Topic Chips ─── */
+.chips-row{display:flex;flex-wrap:wrap;gap:7px;margin-bottom:16px;}
+.chip{padding:6px 12px;border-radius:20px;border:1px solid var(--border);background:var(--surface2);color:var(--muted);font-family:'JetBrains Mono',monospace;font-size:11px;cursor:pointer;transition:.2s;display:flex;align-items:center;gap:5px;white-space:nowrap;}
+.chip.on{border-color:currentColor;}
+.chip.on[data-color="cyan"]{color:var(--c-trends);background:rgba(0,229,255,.08);}
+.chip.on[data-color="green"]{color:var(--c-packages);background:rgba(118,255,3,.08);}
+.chip.on[data-color="orange"]{color:var(--c-courses);background:rgba(255,109,0,.08);}
+.chip.on[data-color="purple"]{color:var(--c-articles);background:rgba(224,64,251,.08);}
+.chip.on[data-color="yellow"]{color:var(--c-jobs);background:rgba(255,235,59,.08);}
+.chip .x{opacity:.5;font-size:13px;}
+.chip-add{border-style:dashed;}
+
+/* ─── Results Grid ─── */
+.results-grid{display:flex;flex-direction:column;gap:10px;}
+.result-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px;position:relative;overflow:hidden;transition:transform .15s;animation:fadeUp .35s ease both;}
+.result-card:active{transform:scale(.985);}
+.card-accent{position:absolute;left:0;top:0;bottom:0;width:3px;}
+.card-type{font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.12em;padding:3px 8px;border-radius:4px;border:1px solid;display:inline-block;margin-bottom:8px;}
+.card-title{font-size:15px;font-weight:700;line-height:1.3;margin-bottom:7px;padding-right:50px;}
+.card-body{font-size:13px;color:#8888aa;line-height:1.6;margin-bottom:10px;}
+.card-tags{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:8px;}
+.card-tag{font-family:'JetBrains Mono',monospace;font-size:10px;padding:2px 7px;border-radius:4px;background:var(--surface2);color:var(--muted);}
+.card-footer{display:flex;align-items:center;justify-content:space-between;}
+.card-source{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--muted);}
+.card-link{font-family:'JetBrains Mono',monospace;font-size:10px;padding:5px 10px;border-radius:6px;border:1px solid var(--border);background:var(--surface2);color:var(--muted);cursor:pointer;text-decoration:none;display:inline-block;}
+.card-link:hover{color:var(--text);}
+.card-badge{position:absolute;top:14px;right:14px;font-family:'JetBrains Mono',monospace;font-size:9px;padding:3px 7px;border-radius:5px;border:1px solid var(--border);background:var(--surface2);color:var(--muted);}
+
+/* ─── Packages specific ─── */
+.pkg-install{background:#0a0a15;border:1px solid var(--border);border-radius:7px;padding:8px 12px;font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--c-packages);margin-bottom:10px;display:flex;align-items:center;justify-content:space-between;gap:8px;}
+.copy-btn{background:none;border:none;color:var(--muted);cursor:pointer;font-size:14px;}
+.stars-badge{font-family:'JetBrains Mono',monospace;font-size:10px;color:#ffeb3b;}
+
+/* ─── Jobs specific ─── */
+.job-filters{margin-bottom:16px;}
+.filter-label{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--muted);letter-spacing:.1em;text-transform:uppercase;margin-bottom:7px;}
+.filter-scroll{display:flex;gap:6px;overflow-x:auto;padding-bottom:4px;scrollbar-width:none;}
+.filter-scroll::-webkit-scrollbar{display:none;}
+.filter-chip{padding:6px 12px;border-radius:20px;border:1px solid var(--border);background:var(--surface2);color:var(--muted);font-family:'JetBrains Mono',monospace;font-size:11px;cursor:pointer;transition:.15s;white-space:nowrap;flex-shrink:0;}
+.filter-chip.on{border-color:var(--c-jobs);color:var(--c-jobs);background:rgba(255,235,59,.08);}
+.job-company-badge{width:40px;height:40px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:800;flex-shrink:0;border:1px solid var(--border);}
+.job-header{display:flex;gap:12px;align-items:flex-start;margin-bottom:10px;}
+.job-info{flex:1;}
+.job-title{font-size:15px;font-weight:700;margin-bottom:3px;}
+.job-company{font-size:13px;color:var(--c-jobs);font-weight:600;}
+.job-meta{display:flex;gap:8px;flex-wrap:wrap;margin-top:4px;}
+.job-meta-item{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--muted);background:var(--surface2);padding:3px 8px;border-radius:5px;}
+.job-apply{background:rgba(255,235,59,.1);border:1px solid rgba(255,235,59,.4);border-radius:8px;padding:9px 16px;color:var(--c-jobs);font-family:'Outfit',sans-serif;font-weight:700;font-size:12px;cursor:pointer;width:100%;margin-top:10px;text-align:center;}
+
+/* ─── Courses specific ─── */
+.course-platform{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--c-courses);margin-bottom:6px;}
+.course-meta{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px;}
+.course-meta-item{font-family:'JetBrains Mono',monospace;font-size:10px;padding:3px 8px;border-radius:5px;background:var(--surface2);color:var(--muted);}
+.course-price{font-family:'JetBrains Mono',monospace;font-size:11px;padding:4px 10px;border-radius:6px;}
+.course-price.free{background:rgba(118,255,3,.1);color:var(--c-packages);border:1px solid rgba(118,255,3,.3);}
+.course-price.paid{background:rgba(255,109,0,.1);color:var(--c-courses);border:1px solid rgba(255,109,0,.3);}
+
+/* ─── Pagination ─── */
+.pagination{display:flex;align-items:center;justify-content:center;gap:8px;margin-top:20px;padding-bottom:8px;}
+.page-btn{width:36px;height:36px;border-radius:8px;border:1px solid var(--border);background:var(--surface2);color:var(--muted);font-family:'JetBrains Mono',monospace;font-size:12px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:.15s;}
+.page-btn.active-page{border-color:var(--c-trends);color:var(--c-trends);background:rgba(0,229,255,.1);}
+.page-btn:disabled{opacity:.3;cursor:not-allowed;}
+.page-info{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);}
+
+/* ─── Loading ─── */
+.loading-wrap{display:flex;flex-direction:column;align-items:center;padding:48px 24px;gap:16px;}
+.spinner{width:36px;height:36px;border:2px solid var(--border);border-top-color:var(--c-trends);border-radius:50%;animation:spin .7s linear infinite;}
+.loading-status{font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--muted);text-align:center;max-width:260px;line-height:1.6;}
+
+/* ─── Empty / Error ─── */
+.empty{display:flex;flex-direction:column;align-items:center;padding:48px 24px;gap:10px;text-align:center;}
+.empty-icon{font-size:40px;opacity:.3;}
+.empty-text{font-size:14px;color:var(--muted);}
+.error-box{background:rgba(255,60,60,.07);border:1px solid rgba(255,60,60,.3);border-radius:var(--radius);padding:14px 16px;color:#ff8080;font-size:13px;margin-bottom:14px;}
+
+/* ─── Animations ─── */
+@keyframes fadeUp{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+
+/* ─── Utility ─── */
+.mt8{margin-top:8px;} .mt12{margin-top:12px;} .row{display:flex;align-items:center;gap:8px;}
+.divider{height:1px;background:var(--border);margin:12px 0;}
+</style>
 </head>
 <body>
-<div id="root"></div>
+<div id="app">
 
-<script type="text/babel">
-const { useState, useCallback } = React;
-
-const TOPICS = [
-  { id: "agentic_dev",   label: "Agentic Development", icon: "⟳", query: "agentic AI development frameworks LangGraph AutoGen CrewAI 2025 2026 latest" },
-  { id: "ai_governance", label: "AI Governance",        icon: "⚖", query: "AI governance frameworks EU AI Act NIST RMF compliance tools 2025 2026" },
-  { id: "python_pkgs",   label: "Python Packages",      icon: "⬡", query: "trending Python packages AI ML tools 2025 2026 GitHub new releases" },
-  { id: "llm_infra",     label: "LLM Infrastructure",   icon: "◈", query: "LLM inference infrastructure vLLM SGLang distributed serving 2025 2026" },
-  { id: "ai_design",     label: "AI Design Patterns",   icon: "✦", query: "AI system design patterns compound AI architecture best practices 2026" },
-  { id: "rag",           label: "RAG & Retrieval",      icon: "◎", query: "RAG retrieval augmented generation advanced techniques vector search 2026" },
-  { id: "devtools",      label: "Dev Tools",            icon: "⌥", query: "AI developer tools coding assistants LLMOps observability 2025 2026" },
-  { id: "evals",         label: "Evals & Testing",      icon: "≋", query: "LLM evaluation benchmarks testing frameworks Braintrust LangSmith 2026" },
-];
-
-const CARD_COLORS = [
-  { bg: "rgba(245,158,11,0.08)",  border: "rgba(245,158,11,0.3)",  accent: "#f59e0b" },
-  { bg: "rgba(99,102,241,0.08)",  border: "rgba(99,102,241,0.3)",  accent: "#6366f1" },
-  { bg: "rgba(16,185,129,0.08)",  border: "rgba(16,185,129,0.3)",  accent: "#10b981" },
-  { bg: "rgba(239,68,68,0.08)",   border: "rgba(239,68,68,0.3)",   accent: "#ef4444" },
-  { bg: "rgba(59,130,246,0.08)",  border: "rgba(59,130,246,0.3)",  accent: "#3b82f6" },
-  { bg: "rgba(168,85,247,0.08)",  border: "rgba(168,85,247,0.3)",  accent: "#a855f7" },
-];
-
-const TAG_COLORS = ["#f59e0b","#6366f1","#10b981","#3b82f6","#a855f7","#ef4444","#14b8a6"];
-const TYPE_COLORS = { REPO:"#10b981", PAPER:"#a855f7", PACKAGE:"#f59e0b", TOOL:"#3b82f6", ARTICLE:"#6366f1", INSIGHT:"#ef4444" };
-
-function extractTags(text) {
-  const kw = ["GitHub","Python","LLM","Agent","RAG","API","CLI","SDK","Framework","Open source","Governance","Policy","Inference","Evaluation","Benchmark","Tool","Library","Research","Paper"];
-  return kw.filter(k => text.toLowerCase().includes(k.toLowerCase())).slice(0, 4);
-}
-function inferType(text) {
-  if (/github\.com/i.test(text)) return "REPO";
-  if (/arxiv|paper|research|study/i.test(text)) return "PAPER";
-  if (/package|pip install|pypi/i.test(text)) return "PACKAGE";
-  if (/tool|cli|framework|library/i.test(text)) return "TOOL";
-  if (/guide|tutorial|blog|post/i.test(text)) return "ARTICLE";
-  return "INSIGHT";
-}
-
-function parseResults(text) {
-  try {
-    const m = text.match(/```json\n?([\s\S]*?)\n?```/) || text.match(/(\{[\s\S]*"items"[\s\S]*\})/);
-    if (m) { const p = JSON.parse(m[1]); if (p.items?.length) return p.items; }
-  } catch {}
-  // Try bare JSON
-  try {
-    const bare = text.trim();
-    if (bare.startsWith("{")) { const p = JSON.parse(bare); if (p.items?.length) return p.items; }
-  } catch {}
-  // Markdown fallback
-  const items = [];
-  const sections = text.split(/\n(?=#{1,3}\s|\d+\.\s|\*\*[^*]+\*\*)/).filter(s => s.trim().length > 30);
-  sections.forEach((section, i) => {
-    const tm = section.match(/^#{1,3}\s+(.+)|^\d+\.\s+\*\*(.+?)\*\*|^\*\*(.+?)\*\*/m);
-    const title = tm ? (tm[1]||tm[2]||tm[3]).replace(/\*\*/g,"") : `Finding ${i+1}`;
-    const urlMatch = section.match(/https?:\/\/[^\s\)>\"]+/);
-    const body = section.replace(/^#{1,3}\s+.+\n?/,"").replace(/\*\*/g,"").trim().slice(0,280);
-    if (title && body.length > 20)
-      items.push({ title: title.slice(0,90), body, url: urlMatch?.[0]||null, tags: extractTags(section), type: inferType(section) });
-  });
-  return items.slice(0, 14);
-}
-
-function buildPrompt(selected) {
-  const topicObjs = TOPICS.filter(t => selected.includes(t.id));
-  const queries = topicObjs.map(t => `- ${t.label}: ${t.query}`).join("\n");
-  return `You are an expert AI research intelligence agent. Use web search to find the latest and most important developments across these topics in 2025-2026:\n\n${queries}\n\nFor each topic find: top GitHub repos, notable Python packages, key papers or blog posts, important frameworks/methodologies, governance standards if relevant.\n\nReturn ONLY a raw JSON object (no markdown, no preamble) in this exact format:\n{"items":[{"title":"...","body":"2-3 sentence summary of importance","url":"https://... or null","tags":["tag1","tag2"],"type":"REPO|PAPER|PACKAGE|TOOL|ARTICLE|INSIGHT","topic":"topic name"}]}\n\nFind 2-3 items per topic. Focus on genuinely new, impactful discoveries from 2025-2026.`;
-}
-
-function App() {
-  const [selected, setSelected] = useState(["agentic_dev","ai_governance"]);
-  const [results, setResults]   = useState([]);
-  const [loading, setLoading]   = useState(false);
-  const [status, setStatus]     = useState("");
-  const [provider, setProvider] = useState("claude");
-  const [claudeKey, setClaudeKey] = useState("");
-  const [openaiKey, setOpenaiKey] = useState("");
-  const [searched, setSearched] = useState(false);
-  const [error, setError]       = useState("");
-  const [showSetup, setShowSetup] = useState(true);
-
-  const toggleTopic = id =>
-    setSelected(prev => prev.includes(id) ? prev.filter(x=>x!==id) : [...prev, id]);
-
-  const searchWithClaude = async () => {
-    const res = await fetch("https://api.anthropic.com/v1/messages", {
-      method: "POST",
-      headers: { "Content-Type":"application/json", "x-api-key": claudeKey, "anthropic-version":"2023-06-01", "anthropic-dangerous-direct-browser-access": "true" },
-      body: JSON.stringify({
-        model: "claude-sonnet-4-20250514", max_tokens: 4000,
-        tools: [{ type:"web_search_20250305", name:"web_search" }],
-        messages: [{ role:"user", content: buildPrompt(selected) }],
-      }),
-    });
-    const data = await res.json();
-    if (data.error) throw new Error(data.error.message);
-    return data.content.filter(b=>b.type==="text").map(b=>b.text).join("\n");
-  };
-
-  const searchWithOpenAI = async () => {
-    const res = await fetch("https://api.openai.com/v1/responses", {
-      method: "POST",
-      headers: { "Content-Type":"application/json", "Authorization":`Bearer ${openaiKey}` },
-      body: JSON.stringify({
-        model: "gpt-4o", tools:[{ type:"web_search_preview" }],
-        input: buildPrompt(selected), max_output_tokens: 4000,
-      }),
-    });
-    const data = await res.json();
-    if (data.error) throw new Error(data.error.message);
-    return (data.output||[]).filter(b=>b.type==="message")
-      .flatMap(b=>b.content||[]).filter(c=>c.type==="output_text").map(c=>c.text).join("\n");
-  };
-
-  const runSearch = useCallback(async () => {
-    if (selected.length === 0) { setError("Select at least one topic."); return; }
-    const key = provider === "claude" ? claudeKey : openaiKey;
-    if (!key.trim()) { setError("Please enter your API key in Setup."); setShowSetup(true); return; }
-
-    setLoading(true); setError(""); setResults([]); setSearched(false);
-    const msgs = ["Scanning GitHub trending repos…","Searching arXiv and blogs…","Indexing Python packages…","Cross-referencing governance docs…","Synthesising intelligence report…"];
-    let mi = 0; setStatus(msgs[0]);
-    const ticker = setInterval(() => { mi=(mi+1)%msgs.length; setStatus(msgs[mi]); }, 2200);
-
-    try {
-      const raw = provider === "claude" ? await searchWithClaude() : await searchWithOpenAI();
-      const items = parseResults(raw);
-      setResults(items.length > 0 ? items : [{ title:"Raw Report", body: raw.slice(0,400), url:null, tags:["Research"], type:"INSIGHT", topic:"All" }]);
-      setSearched(true);
-    } catch(e) {
-      setError(`Error: ${e.message}`);
-    } finally {
-      clearInterval(ticker); setLoading(false); setStatus("");
-    }
-  }, [selected, provider, claudeKey, openaiKey]);
-
-  return (
-    <div style={{ minHeight:"100vh", background:"#0a0a0f", paddingBottom:60 }}>
-
-      {/* Header */}
-      <div style={{ background:"linear-gradient(180deg,#0f0f1a,#0a0a0f)", borderBottom:"1px solid #1a1a2e", padding:"env(safe-area-inset-top,28px) 20px 20px" }}>
-        <div style={{ maxWidth:680, margin:"0 auto" }}>
-          <div style={{ display:"flex", alignItems:"center", gap:8, marginBottom:4 }}>
-            <div style={{ width:7, height:7, borderRadius:"50%", background:"#f59e0b", boxShadow:"0 0 8px #f59e0b", animation:"pulse-dot 2s infinite" }} />
-            <span style={{ fontFamily:"'JetBrains Mono',monospace", fontSize:10, color:"#f59e0b", letterSpacing:"0.15em", textTransform:"uppercase" }}>Intelligence Feed</span>
-          </div>
-          <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-end" }}>
-            <div>
-              <h1 style={{ fontSize:26, fontWeight:800, letterSpacing:"-0.03em", lineHeight:1.1 }}>
-                <span style={{ color:"#fff" }}>AI Research</span><span style={{ color:"#f59e0b" }}> Scout</span>
-              </h1>
-              <p style={{ color:"#475569", fontSize:12, marginTop:3 }}>GitHub · arXiv · Web — live sweep</p>
-            </div>
-            <button onClick={()=>setShowSetup(s=>!s)} style={{ background:showSetup?"rgba(99,102,241,0.15)":"#0f0f1a", border:`1px solid ${showSetup?"#6366f1":"#1e1e30"}`, borderRadius:9, padding:"8px 14px", color:showSetup?"#818cf8":"#475569", fontFamily:"'JetBrains Mono',monospace", fontSize:11, cursor:"pointer" }}>
-              {showSetup ? "▲ Setup" : "▼ Setup"}
-            </button>
-          </div>
-        </div>
+  <!-- HEADER -->
+  <div id="header">
+    <div class="hdr-top">
+      <div class="logo">
+        <div class="logo-dot"></div>
+        <div class="logo-text">AI <span>Scout</span> Pro</div>
       </div>
-
-      <div style={{ maxWidth:680, margin:"0 auto", padding:"0 16px" }}>
-
-        {/* Setup Panel */}
-        {showSetup && (
-          <div style={{ marginTop:20, background:"#0f0f1a", border:"1px solid #1e1e30", borderRadius:16, padding:"18px 16px", animation:"fadeUp 0.3s ease" }}>
-            <p style={{ fontFamily:"'JetBrains Mono',monospace", fontSize:10, color:"#475569", letterSpacing:"0.1em", textTransform:"uppercase", marginBottom:14 }}>API Setup</p>
-
-            {/* Provider tabs */}
-            <div style={{ display:"flex", gap:8, marginBottom:16 }}>
-              {["claude","openai"].map(p=>(
-                <button key={p} onClick={()=>setProvider(p)}
-                  style={{ flex:1, padding:"10px 0", borderRadius:10, border:`1px solid ${provider===p?(p==="claude"?"#6366f1":"#10b981"):"#1e1e30"}`, background:provider===p?(p==="claude"?"rgba(99,102,241,0.12)":"rgba(16,185,129,0.12)"):"transparent", color:provider===p?(p==="claude"?"#818cf8":"#34d399"):"#475569", fontFamily:"'Syne',sans-serif", fontWeight:700, fontSize:13, cursor:"pointer" }}>
-                  {p==="claude"?"◆ Claude":"◇ OpenAI"}
-                </button>
-              ))}
-            </div>
-
-            {provider === "claude" && (
-              <div>
-                <label style={{ display:"block", fontFamily:"'JetBrains Mono',monospace", fontSize:10, color:"#64748b", letterSpacing:"0.1em", textTransform:"uppercase", marginBottom:8 }}>Anthropic API Key</label>
-                <input type="password" placeholder="sk-ant-..." value={claudeKey} onChange={e=>setClaudeKey(e.target.value)}
-                  style={{ width:"100%", background:"#161622", border:"1px solid #2d2d44", borderRadius:8, padding:"12px 14px", color:"#e2e8f0", fontFamily:"'JetBrains Mono',monospace", fontSize:13 }} />
-                <p style={{ marginTop:8, fontSize:11, color:"#334155", lineHeight:1.5 }}>Get your key at <strong style={{color:"#6366f1"}}>console.anthropic.com</strong> → API Keys. Uses Claude Sonnet with live web search.</p>
-              </div>
-            )}
-            {provider === "openai" && (
-              <div>
-                <label style={{ display:"block", fontFamily:"'JetBrains Mono',monospace", fontSize:10, color:"#64748b", letterSpacing:"0.1em", textTransform:"uppercase", marginBottom:8 }}>OpenAI API Key</label>
-                <input type="password" placeholder="sk-..." value={openaiKey} onChange={e=>setOpenaiKey(e.target.value)}
-                  style={{ width:"100%", background:"#161622", border:"1px solid #2d2d44", borderRadius:8, padding:"12px 14px", color:"#e2e8f0", fontFamily:"'JetBrains Mono',monospace", fontSize:13 }} />
-                <p style={{ marginTop:8, fontSize:11, color:"#334155", lineHeight:1.5 }}>Get your key at <strong style={{color:"#10b981"}}>platform.openai.com</strong> → API Keys. Uses GPT-4o with web search.</p>
-              </div>
-            )}
-
-            <button onClick={()=>setShowSetup(false)} style={{ marginTop:16, width:"100%", padding:"11px 0", background:"rgba(99,102,241,0.15)", border:"1px solid #6366f1", borderRadius:10, color:"#818cf8", fontFamily:"'Syne',sans-serif", fontWeight:700, fontSize:13, cursor:"pointer" }}>
-              Done ✓
-            </button>
-          </div>
-        )}
-
-        {/* Topic Selector */}
-        <div style={{ marginTop:24, marginBottom:20 }}>
-          <div style={{ display:"flex", justifyContent:"space-between", marginBottom:12 }}>
-            <span style={{ fontFamily:"'JetBrains Mono',monospace", fontSize:11, color:"#475569", letterSpacing:"0.1em", textTransform:"uppercase" }}>Topics</span>
-            <span style={{ fontFamily:"'JetBrains Mono',monospace", fontSize:11, color:"#f59e0b" }}>{selected.length} selected</span>
-          </div>
-          <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:8 }}>
-            {TOPICS.map(t => {
-              const on = selected.includes(t.id);
-              return (
-                <button key={t.id} className="topic-chip" onClick={()=>toggleTopic(t.id)}
-                  style={{ display:"flex", alignItems:"center", gap:10, padding:"13px 14px", background:on?"rgba(245,158,11,0.1)":"#0f0f1a", border:`1px solid ${on?"#f59e0b":"#1e1e30"}`, borderRadius:12, cursor:"pointer", textAlign:"left" }}>
-                  <span style={{ fontSize:15, color:on?"#f59e0b":"#334155" }}>{t.icon}</span>
-                  <span style={{ fontFamily:"'Syne',sans-serif", fontWeight:on?700:500, fontSize:12, color:on?"#fcd34d":"#64748b", lineHeight:1.2 }}>{t.label}</span>
-                  {on && <span style={{ marginLeft:"auto", width:6, height:6, borderRadius:"50%", background:"#f59e0b", flexShrink:0 }} />}
-                </button>
-              );
-            })}
-          </div>
-        </div>
-
-        {/* Run Button */}
-        <button className="run-btn" onClick={runSearch} disabled={loading||selected.length===0}
-          style={{ width:"100%", padding:"17px 24px", background:loading?"#1e1e30":"linear-gradient(135deg,#f59e0b,#d97706)", border:"none", borderRadius:14, cursor:loading?"not-allowed":"pointer", fontFamily:"'Syne',sans-serif", fontWeight:800, fontSize:15, color:loading?"#475569":"#0a0a0f", display:"flex", alignItems:"center", justifyContent:"center", gap:10, boxShadow:loading?"none":"0 4px 24px rgba(245,158,11,0.25)" }}>
-          {loading ? (
-            <>
-              <div style={{ width:18, height:18, border:"2px solid #334155", borderTopColor:"#f59e0b", borderRadius:"50%", animation:"spin 0.8s linear infinite" }} />
-              <span style={{ fontFamily:"'JetBrains Mono',monospace", fontSize:12, fontWeight:400, color:"#64748b" }}>{status}</span>
-            </>
-          ) : "⟳ Run Research Sweep"}
-        </button>
-
-        {error && (
-          <div style={{ marginTop:14, padding:"12px 16px", background:"rgba(239,68,68,0.08)", border:"1px solid rgba(239,68,68,0.3)", borderRadius:10, color:"#fca5a5", fontSize:13 }}>{error}</div>
-        )}
-
-        {/* Results */}
-        {searched && results.length > 0 && (
-          <div style={{ marginTop:32 }}>
-            <div style={{ display:"flex", justifyContent:"space-between", marginBottom:14 }}>
-              <span style={{ fontFamily:"'JetBrains Mono',monospace", fontSize:11, color:"#475569", letterSpacing:"0.1em", textTransform:"uppercase" }}>Intelligence Results</span>
-              <span style={{ fontFamily:"'JetBrains Mono',monospace", fontSize:11, color:"#10b981" }}>{results.length} findings</span>
-            </div>
-            <div style={{ display:"flex", flexDirection:"column", gap:12 }}>
-              {results.map((item, i) => {
-                const c = CARD_COLORS[i % CARD_COLORS.length];
-                return (
-                  <div key={i} className="result-card"
-                    style={{ animationDelay:`${i*0.06}s`, background:c.bg, border:`1px solid ${c.border}`, borderRadius:14, padding:"16px 18px", cursor:item.url?"pointer":"default" }}
-                    onClick={()=>item.url && window.open(item.url,"_blank","noopener")}>
-                    <div style={{ display:"flex", alignItems:"flex-start", justifyContent:"space-between", gap:8, marginBottom:10 }}>
-                      <h3 style={{ margin:0, fontSize:14, fontWeight:700, color:"#f1f5f9", lineHeight:1.3, flex:1 }}>{item.title}</h3>
-                      <span style={{ flexShrink:0, fontFamily:"'JetBrains Mono',monospace", fontSize:9, padding:"3px 7px", borderRadius:5, background:"rgba(0,0,0,0.3)", color:TYPE_COLORS[item.type]||"#94a3b8", border:`1px solid ${TYPE_COLORS[item.type]||"#334155"}40`, letterSpacing:"0.08em" }}>{item.type}</span>
-                    </div>
-                    <p style={{ margin:"0 0 12px", fontSize:13, color:"#94a3b8", lineHeight:1.55 }}>{item.body}</p>
-                    <div style={{ display:"flex", flexWrap:"wrap", gap:6, alignItems:"center" }}>
-                      {(item.tags||[]).map((tag,j)=>(
-                        <span key={j} style={{ fontFamily:"'JetBrains Mono',monospace", fontSize:10, color:TAG_COLORS[j%TAG_COLORS.length], background:`${TAG_COLORS[j%TAG_COLORS.length]}15`, padding:"3px 8px", borderRadius:5, border:`1px solid ${TAG_COLORS[j%TAG_COLORS.length]}30` }}>{tag}</span>
-                      ))}
-                      {item.url && <span style={{ marginLeft:"auto", fontFamily:"'JetBrains Mono',monospace", fontSize:10, color:c.accent, opacity:0.8 }}>↗ open</span>}
-                    </div>
-                    {item.topic && <div style={{ marginTop:10, paddingTop:10, borderTop:`1px solid ${c.border}50`, fontFamily:"'JetBrains Mono',monospace", fontSize:10, color:"#334155" }}>{item.topic}</div>}
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        )}
-
-        <div style={{ marginTop:48, textAlign:"center", fontFamily:"'JetBrains Mono',monospace", fontSize:10, color:"#1e293b", lineHeight:2 }}>
-          AI Research Scout · Subhagato<br/>
-          Keys stay in your browser only
-        </div>
-      </div>
+      <button class="setup-btn" id="setup-toggle" onclick="toggleSetup()">⚙ Setup</button>
     </div>
+    <div id="setup-panel">
+      <div class="prov-tabs">
+        <button class="prov-tab" id="tab-claude" onclick="setProvider('claude')">◆ Claude</button>
+        <button class="prov-tab" id="tab-openai" onclick="setProvider('openai')">◇ OpenAI</button>
+      </div>
+      <div id="claude-form">
+        <label class="key-label">Anthropic API Key</label>
+        <input class="key-input" type="password" id="claude-key" placeholder="sk-ant-api03-..." oninput="S.claudeKey=this.value"/>
+        <p class="key-hint">Get at <strong>console.anthropic.com</strong> → API Keys. Enables Claude Sonnet with live web search.</p>
+      </div>
+      <div id="openai-form" style="display:none">
+        <label class="key-label">OpenAI API Key</label>
+        <input class="key-input" type="password" id="openai-key" placeholder="sk-..." oninput="S.openaiKey=this.value"/>
+        <p class="key-hint">Get at <strong>platform.openai.com</strong> → API Keys. Uses GPT-4o with web search.</p>
+      </div>
+      <button class="save-btn" onclick="saveKeys()">Save & Close ✓</button>
+    </div>
+  </div>
+
+  <!-- CONTENT -->
+  <div id="content">
+
+    <!-- ══════ TRENDS ══════ -->
+    <div class="section active" data-section="trends">
+      <div class="section-hdr">
+        <div class="section-title" style="color:var(--c-trends)">🔥 Trends</div>
+        <div class="section-sub">Latest in GenAI · Agentic AI · LLM Infrastructure</div>
+      </div>
+      <div class="search-row">
+        <div class="search-wrap">
+          <input class="search-input" id="trends-search" placeholder="Add a custom topic…" onkeydown="if(event.key==='Enter')addCustomTopic('trends')"/>
+          <button class="search-add-btn" onclick="addCustomTopic('trends')" title="Add topic">＋</button>
+        </div>
+        <button class="run-btn" id="trends-run-btn" onclick="runSearch('trends')">⟳ Fetch</button>
+      </div>
+      <div class="chips-row" id="trends-chips"></div>
+      <div id="trends-error"></div>
+      <div id="trends-results"></div>
+      <div id="trends-pagination"></div>
+    </div>
+
+    <!-- ══════ PACKAGES ══════ -->
+    <div class="section" data-section="packages">
+      <div class="section-hdr">
+        <div class="section-title" style="color:var(--c-packages)">📦 Packages</div>
+        <div class="section-sub">Latest Python packages for AI/ML</div>
+      </div>
+      <div class="search-row">
+        <div class="search-wrap">
+          <input class="search-input" id="packages-search" placeholder="e.g. RAG, vector DB, fine-tuning…" onkeydown="if(event.key==='Enter')addCustomTopic('packages')"/>
+          <button class="search-add-btn" onclick="addCustomTopic('packages')">＋</button>
+        </div>
+        <button class="run-btn pkg" id="packages-run-btn" onclick="runSearch('packages')">⟳ Fetch</button>
+      </div>
+      <div class="chips-row" id="packages-chips"></div>
+      <div id="packages-error"></div>
+      <div id="packages-results"></div>
+      <div id="packages-pagination"></div>
+    </div>
+
+    <!-- ══════ COURSES ══════ -->
+    <div class="section" data-section="courses">
+      <div class="section-hdr">
+        <div class="section-title" style="color:var(--c-courses)">🎓 Courses</div>
+        <div class="section-sub">New AI/DL courses dropping in 2025–2026</div>
+      </div>
+      <div class="search-row">
+        <div class="search-wrap">
+          <input class="search-input" id="courses-search" placeholder="e.g. LLM fine-tuning, AI governance…" onkeydown="if(event.key==='Enter')addCustomTopic('courses')"/>
+          <button class="search-add-btn" onclick="addCustomTopic('courses')">＋</button>
+        </div>
+        <button class="run-btn crs" id="courses-run-btn" onclick="runSearch('courses')">⟳ Fetch</button>
+      </div>
+      <div class="chips-row" id="courses-chips"></div>
+      <div id="courses-error"></div>
+      <div id="courses-results"></div>
+      <div id="courses-pagination"></div>
+    </div>
+
+    <!-- ══════ ARTICLES ══════ -->
+    <div class="section" data-section="articles">
+      <div class="section-hdr">
+        <div class="section-title" style="color:var(--c-articles)">📰 Articles</div>
+        <div class="section-sub">Papers · Blog posts · Research from top labs</div>
+      </div>
+      <div class="search-row">
+        <div class="search-wrap">
+          <input class="search-input" id="articles-search" placeholder="e.g. mixture of experts, RLHF…" onkeydown="if(event.key==='Enter')addCustomTopic('articles')"/>
+          <button class="search-add-btn" onclick="addCustomTopic('articles')">＋</button>
+        </div>
+        <button class="run-btn art" id="articles-run-btn" onclick="runSearch('articles')">⟳ Fetch</button>
+      </div>
+      <div class="chips-row" id="articles-chips"></div>
+      <div id="articles-error"></div>
+      <div id="articles-results"></div>
+      <div id="articles-pagination"></div>
+    </div>
+
+    <!-- ══════ JOBS ══════ -->
+    <div class="section" data-section="jobs">
+      <div class="section-hdr">
+        <div class="section-title" style="color:var(--c-jobs)">💼 Jobs</div>
+        <div class="section-sub">Director-level AI roles in India · Major companies</div>
+      </div>
+      <div class="search-row">
+        <div class="search-wrap">
+          <input class="search-input" id="jobs-search" placeholder="Add role or company…" onkeydown="if(event.key==='Enter')addCustomTopic('jobs')"/>
+          <button class="search-add-btn" onclick="addCustomTopic('jobs')">＋</button>
+        </div>
+        <button class="run-btn job" id="jobs-run-btn" onclick="runSearch('jobs')">⟳ Search</button>
+      </div>
+      <div class="job-filters">
+        <div class="filter-label">Companies</div>
+        <div class="filter-scroll" id="company-filters"></div>
+        <div class="divider"></div>
+        <div class="filter-label">Level</div>
+        <div class="filter-scroll" id="level-filters"></div>
+        <div class="divider"></div>
+        <div class="filter-label">Location</div>
+        <div class="filter-scroll" id="location-filters"></div>
+      </div>
+      <div id="jobs-error"></div>
+      <div id="jobs-results"></div>
+      <div id="jobs-pagination"></div>
+    </div>
+
+  </div><!-- /content -->
+
+  <!-- TAB BAR -->
+  <div id="tabbar">
+    <button class="tab-item active" data-tab="trends" onclick="switchTab('trends')">
+      <span class="tab-icon">🔥</span>
+      <span class="tab-label" style="color:var(--c-trends)">Trends</span>
+    </button>
+    <button class="tab-item" data-tab="packages" onclick="switchTab('packages')">
+      <span class="tab-icon">📦</span>
+      <span class="tab-label">Packages</span>
+    </button>
+    <button class="tab-item" data-tab="courses" onclick="switchTab('courses')">
+      <span class="tab-icon">🎓</span>
+      <span class="tab-label">Courses</span>
+    </button>
+    <button class="tab-item" data-tab="articles" onclick="switchTab('articles')">
+      <span class="tab-icon">📰</span>
+      <span class="tab-label">Articles</span>
+    </button>
+    <button class="tab-item" data-tab="jobs" onclick="switchTab('jobs')">
+      <span class="tab-icon">💼</span>
+      <span class="tab-label">Jobs</span>
+    </button>
+  </div>
+
+</div><!-- /app -->
+
+<script>
+/* ═══════════════════════════════════════════════
+   STATE
+═══════════════════════════════════════════════ */
+const PER_PAGE = 6;
+
+const S = {
+  provider: localStorage.getItem('aiscout_prov') || 'claude',
+  claudeKey: localStorage.getItem('aiscout_ck') || '',
+  openaiKey: localStorage.getItem('aiscout_ok') || '',
+  activeTab: 'trends',
+  setupOpen: false,
+  results:  {trends:[],packages:[],courses:[],articles:[],jobs:[]},
+  pages:    {trends:1,packages:1,courses:1,articles:1,jobs:1},
+  loading:  {trends:false,packages:false,courses:false,articles:false,jobs:false},
+  topics: {
+    trends:   ['GenAI','Agentic AI','LLM Infra','Multimodal','RAG'],
+    packages: ['LLM','Agents','RAG','Evaluation','Inference','Data'],
+    courses:  ['Deep Learning','LLM Fine-tuning','Agentic AI','AI Governance','RAG'],
+    articles: ['LLM Research','AI Safety','Agentic Systems','Foundation Models'],
+    jobs:     []
+  },
+  selectedTopics: {
+    trends:   ['GenAI','Agentic AI','LLM Infra'],
+    packages: ['LLM','Agents','RAG'],
+    courses:  ['Deep Learning','LLM Fine-tuning'],
+    articles: ['LLM Research','AI Safety'],
+    jobs:     []
+  },
+  jobFilters: {
+    companies: ['Google','NVIDIA','McKinsey','BCG'],
+    levels:    ['Director'],
+    locations: ['Bangalore']
+  }
+};
+
+const COMPANIES = ['Google','Apple','NVIDIA','Microsoft','Amazon','McKinsey','BCG','Goldman Sachs','JP Morgan','Adobe','Salesforce','Samsung','Deloitte','Accenture','Meta','Flipkart','Meesho','Sarvam AI','Krutrim'];
+const LEVELS    = ['Director','VP / Vice President','Head of AI','Principal Engineer','Staff Engineer'];
+const LOCATIONS = ['Bangalore','Hyderabad','Mumbai','Delhi / NCR','Pune','Chennai','Anywhere in India'];
+
+/* ═══════════════════════════════════════════════
+   INIT
+═══════════════════════════════════════════════ */
+function init(){
+  // Restore keys
+  if(S.claudeKey) document.getElementById('claude-key').value = S.claudeKey;
+  if(S.openaiKey) document.getElementById('openai-key').value = S.openaiKey;
+  setProvider(S.provider, false);
+  renderAllChips();
+  renderJobFilters();
+  // Auto-load trends if key present
+  if(S.claudeKey || S.openaiKey) setTimeout(()=>runSearch('trends'), 400);
+}
+
+/* ═══════════════════════════════════════════════
+   NAVIGATION
+═══════════════════════════════════════════════ */
+function switchTab(tab){
+  S.activeTab = tab;
+  document.querySelectorAll('.tab-item').forEach(b=>b.classList.toggle('active',b.dataset.tab===tab));
+  document.querySelectorAll('.section').forEach(s=>s.classList.toggle('active',s.dataset.section===tab));
+  document.getElementById('content').scrollTop = 0;
+}
+
+function toggleSetup(){
+  S.setupOpen = !S.setupOpen;
+  document.getElementById('setup-panel').classList.toggle('open', S.setupOpen);
+  document.getElementById('setup-toggle').classList.toggle('active', S.setupOpen);
+}
+
+function setProvider(p, render=true){
+  S.provider = p;
+  document.getElementById('tab-claude').className = 'prov-tab' + (p==='claude'?' active-claude':'');
+  document.getElementById('tab-openai').className = 'prov-tab' + (p==='openai'?' active-openai':'');
+  document.getElementById('claude-form').style.display = p==='claude'?'block':'none';
+  document.getElementById('openai-form').style.display = p==='openai'?'block':'none';
+}
+
+function saveKeys(){
+  localStorage.setItem('aiscout_prov', S.provider);
+  localStorage.setItem('aiscout_ck', S.claudeKey);
+  localStorage.setItem('aiscout_ok', S.openaiKey);
+  S.setupOpen = false;
+  document.getElementById('setup-panel').classList.remove('open');
+  document.getElementById('setup-toggle').classList.remove('active');
+}
+
+/* ═══════════════════════════════════════════════
+   TOPIC CHIPS
+═══════════════════════════════════════════════ */
+const CHIP_COLORS = {trends:'cyan',packages:'green',courses:'orange',articles:'purple',jobs:'yellow'};
+
+function renderChips(tab){
+  const el = document.getElementById(`${tab}-chips`);
+  if(!el) return;
+  const color = CHIP_COLORS[tab];
+  const all   = S.topics[tab];
+  const sel   = S.selectedTopics[tab];
+  el.innerHTML = all.map(t=>{
+    const on = sel.includes(t);
+    return `<button class="chip ${on?'on':''} ${on?`data-color="${color}"`:''}" 
+      onclick="toggleTopic('${tab}','${t.replace(/'/g,"\\'")}','${color}')" 
+      ${on?`data-color="${color}"`:''}>${t}${on?` <span class="x" onclick="event.stopPropagation();removeTopic('${tab}','${t.replace(/'/g,"\\'")}')">×</span>`:''}</button>`;
+  }).join('') + `<button class="chip chip-add" onclick="focusSearch('${tab}')">＋ Add</button>`;
+}
+
+function renderAllChips(){
+  ['trends','packages','courses','articles'].forEach(renderChips);
+}
+
+function toggleTopic(tab, topic, color){
+  const sel = S.selectedTopics[tab];
+  const idx = sel.indexOf(topic);
+  if(idx>=0) sel.splice(idx,1); else sel.push(topic);
+  renderChips(tab);
+}
+
+function removeTopic(tab, topic){
+  S.topics[tab] = S.topics[tab].filter(t=>t!==topic);
+  S.selectedTopics[tab] = S.selectedTopics[tab].filter(t=>t!==topic);
+  renderChips(tab);
+}
+
+function addCustomTopic(tab){
+  const inp = document.getElementById(`${tab}-search`);
+  const val = inp.value.trim();
+  if(!val) return;
+  if(!S.topics[tab].includes(val)) S.topics[tab].push(val);
+  if(!S.selectedTopics[tab].includes(val)) S.selectedTopics[tab].push(val);
+  inp.value = '';
+  renderChips(tab);
+}
+
+function focusSearch(tab){ document.getElementById(`${tab}-search`)?.focus(); }
+
+/* ═══════════════════════════════════════════════
+   JOB FILTERS
+═══════════════════════════════════════════════ */
+function renderJobFilters(){
+  renderFilterGroup('company-filters', COMPANIES, S.jobFilters.companies, 'companies');
+  renderFilterGroup('level-filters',   LEVELS,    S.jobFilters.levels,    'levels');
+  renderFilterGroup('location-filters',LOCATIONS, S.jobFilters.locations, 'locations');
+}
+
+function renderFilterGroup(elId, options, selected, key){
+  const el = document.getElementById(elId);
+  if(!el) return;
+  el.innerHTML = options.map(o=>{
+    const on = selected.includes(o);
+    return `<button class="filter-chip ${on?'on':''}" onclick="toggleFilter('${key}','${o.replace(/'/g,"\\'")}')">
+      ${on?'✓ ':''}${o}</button>`;
+  }).join('');
+}
+
+function toggleFilter(key, val){
+  const arr = S.jobFilters[key];
+  const i = arr.indexOf(val);
+  if(i>=0) arr.splice(i,1); else arr.push(val);
+  renderFilterGroup(
+    key==='companies'?'company-filters':key==='levels'?'level-filters':'location-filters',
+    key==='companies'?COMPANIES:key==='levels'?LEVELS:LOCATIONS,
+    arr, key
   );
 }
 
-ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+/* ═══════════════════════════════════════════════
+   PROMPTS
+═══════════════════════════════════════════════ */
+function buildPrompt(tab){
+  const sel = S.selectedTopics[tab];
+  const topicsStr = sel.length ? sel.join(', ') : 'general AI';
+
+  if(tab === 'trends') return `You are an expert AI intelligence analyst. Search the web RIGHT NOW for the absolute latest developments, releases, announcements, and breakthroughs in these areas: ${topicsStr}.
+
+Focus specifically on 2025-2026 content. Find:
+- Brand new GitHub repositories with rapid star growth
+- Major model releases and technique announcements from OpenAI, Anthropic, Google, Meta, Mistral
+- New frameworks and tools gaining traction in the AI community  
+- Papers and blog posts that are trending
+- Breaking news in GenAI, Agentic AI, LLM Infrastructure
+
+Return ONLY raw JSON (no markdown, no explanation):
+{"items":[{"title":"clear title","summary":"2-3 sentences on why this matters RIGHT NOW","url":"https://... or null","source":"GitHub|HuggingFace|arXiv|OpenAI|Anthropic|Google|News","category":"${sel[0]||'GenAI'}","date":"specific date in 2026 or late 2025","tags":["tag1","tag2","tag3"],"type":"MODEL|REPO|FRAMEWORK|PAPER|NEWS|TOOL","hot":true}]}
+
+Find at least 10-12 highly current items. Prioritize recency and impact.`;
+
+  if(tab === 'packages') return `Search the web for the latest Python packages for AI/ML released or significantly updated in 2025-2026, specifically for: ${topicsStr}.
+
+Find packages on PyPI, GitHub, and HuggingFace. Include emerging packages, stable new releases, and updated classics.
+
+Return ONLY raw JSON:
+{"items":[{"name":"package-name","version":"latest version","summary":"what it does in 2-3 sentences and why it matters","install":"pip install package-name","github":"github url or null","pypi":"pypi url","stars":"number as string or null","weekly_downloads":"number as string or null","category":"LLM|Agents|RAG|Eval|Infra|Data|Vision|Audio","tags":["tag1","tag2"],"released":"date released or updated","url":"best link"}]}
+
+Find at least 10-12 packages. Mix well-known and underrated gems.`;
+
+  if(tab === 'courses') return `Search the web for the latest and best online courses for AI and deep learning released or updated in 2025-2026, covering: ${topicsStr}.
+
+Look on: DeepLearning.AI, Coursera, fast.ai, Udemy, YouTube, Hugging Face, university open courseware, and creator-led paid courses.
+
+Return ONLY raw JSON:
+{"items":[{"title":"exact course title","platform":"DeepLearning.AI|Coursera|fast.ai|Udemy|YouTube|HuggingFace|Other","instructor":"instructor name(s)","level":"Beginner|Intermediate|Advanced","price":"Free|$X|Subscription","duration":"X hours or X weeks","summary":"what you learn and why it's valuable in 2-3 sentences","url":"direct course url","tags":["tag1","tag2"],"category":"Deep Learning|LLM|Agentic AI|Governance|RAG|MLOps|Computer Vision","rating":"X/5 or null","enrolled":"number of students or null"}]}
+
+Find at least 10 courses mixing free and paid, beginner and advanced.`;
+
+  if(tab === 'articles') return `Search the web for the most important recent research papers, technical blog posts, and articles about AI published in 2025-2026, covering: ${topicsStr}.
+
+Search arXiv, Anthropic blog, OpenAI blog, Google DeepMind blog, Meta AI blog, Hugging Face blog, Towards Data Science, The Batch, ICLR/NeurIPS proceedings.
+
+Return ONLY raw JSON:
+{"items":[{"title":"exact title","author":"author(s) or org","source":"arXiv|Anthropic|OpenAI|Google|Meta|HuggingFace|Medium|Other","date":"publication date","summary":"2-3 sentences on key findings and why it matters","url":"direct link","category":"Research|Blog|Policy|Tutorial|Survey","tags":["tag1","tag2"],"type":"PAPER|BLOG|SURVEY|TUTORIAL","impact":"why this is important"}}
+
+Find at least 10-12 high-quality, recent articles. Mix landmark papers and accessible blog posts.`;
+
+  if(tab === 'jobs') {
+    const companies = S.jobFilters.companies.length ? S.jobFilters.companies.join(', ') : 'Google, NVIDIA, McKinsey, BCG, Microsoft, Amazon, Apple';
+    const levels = S.jobFilters.levels.length ? S.jobFilters.levels.join(', ') : 'Director, VP';
+    const locations = S.jobFilters.locations.length ? S.jobFilters.locations.join(', ') : 'India';
+    const extra = S.selectedTopics.jobs.length ? ` Also look for: ${S.selectedTopics.jobs.join(', ')}.` : '';
+    return `Search the web and LinkedIn for current AI/GenAI/LLM job openings in India at these companies: ${companies}.
+
+Look for ${levels} level roles in: AI, Machine Learning, GenAI, LLM Engineering, Data Science, AI Research, AI Governance.
+Locations: ${locations}.${extra}
+
+Also search for innovative Indian AI startups: Sarvam AI, Krutrim, Perplexity India offices, etc.
+
+Return ONLY raw JSON:
+{"items":[{"title":"exact job title","company":"company name","location":"city, India","level":"Director|VP|Principal|Head of","salary":"range if mentioned or null","summary":"2-3 sentence description of the role and what they're looking for","requirements":"top 3-4 key requirements","url":"direct job url or LinkedIn search url","posted":"date posted or Recent","type":"Full-time|Contract","skills":["skill1","skill2","skill3"]}]}
+
+Find 10-15 real or highly plausible current openings. Include both MNC and startup roles.`;
+  }
+}
+
+/* ═══════════════════════════════════════════════
+   API CALLS
+═══════════════════════════════════════════════ */
+async function callAPI(prompt){
+  const key = S.provider==='claude' ? S.claudeKey : S.openaiKey;
+  if(!key) throw new Error('No API key. Tap ⚙ Setup to add your key.');
+
+  if(S.provider === 'claude'){
+    const r = await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','x-api-key':key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
+      body: JSON.stringify({
+        model:'claude-sonnet-4-20250514', max_tokens:4000,
+        tools:[{type:'web_search_20250305',name:'web_search'}],
+        messages:[{role:'user',content:prompt}]
+      })
+    });
+    const d = await r.json();
+    if(d.error) throw new Error(d.error.message);
+    return d.content.filter(b=>b.type==='text').map(b=>b.text).join('\n');
+  } else {
+    const r = await fetch('https://api.openai.com/v1/responses',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','Authorization':`Bearer ${key}`},
+      body: JSON.stringify({model:'gpt-4o',tools:[{type:'web_search_preview'}],input:prompt,max_output_tokens:4000})
+    });
+    const d = await r.json();
+    if(d.error) throw new Error(d.error.message);
+    return (d.output||[]).filter(b=>b.type==='message').flatMap(b=>b.content||[]).filter(c=>c.type==='output_text').map(c=>c.text).join('\n');
+  }
+}
+
+/* ═══════════════════════════════════════════════
+   PARSE RESULTS
+═══════════════════════════════════════════════ */
+function parseJSON(raw){
+  // Try clean JSON
+  const attempts = [
+    ()=>{ const m=raw.match(/```json\n?([\s\S]*?)\n?```/); return m&&JSON.parse(m[1]); },
+    ()=>{ const m=raw.match(/\{[\s\S]*"items"[\s\S]*\}/); return m&&JSON.parse(m[0]); },
+    ()=>JSON.parse(raw.trim()),
+  ];
+  for(const fn of attempts){ try{ const r=fn(); if(r?.items?.length) return r.items; }catch{} }
+  return [];
+}
+
+/* ═══════════════════════════════════════════════
+   RUN SEARCH
+═══════════════════════════════════════════════ */
+const STATUS_MSGS = {
+  trends:   ['Scanning GitHub trending…','Sweeping AI labs blogs…','Checking HuggingFace…','Aggregating signals…','Building intelligence report…'],
+  packages: ['Indexing PyPI releases…','Checking GitHub stars…','Scanning HuggingFace…','Ranking by traction…','Compiling package list…'],
+  courses:  ['Searching DeepLearning.AI…','Checking Coursera catalog…','Scanning fast.ai…','Finding hidden gems…','Compiling course list…'],
+  articles: ['Sweeping arXiv…','Checking AI lab blogs…','Reading top papers…','Ranking by impact…','Building reading list…'],
+  jobs:     ['Searching LinkedIn India…','Checking company career pages…','Scanning job boards…','Filtering by level…','Compiling opportunities…']
+};
+
+async function runSearch(tab){
+  if(S.loading[tab]) return;
+  S.loading[tab] = true;
+  S.pages[tab] = 1;
+  showLoading(tab);
+  clearError(tab);
+
+  const msgs = STATUS_MSGS[tab];
+  let mi = 0;
+  const statusEl = document.getElementById(`${tab}-loading-status`);
+  const ticker = setInterval(()=>{ mi=(mi+1)%msgs.length; if(statusEl) statusEl.textContent=msgs[mi]; },2000);
+
+  try {
+    const raw = await callAPI(buildPrompt(tab));
+    const items = parseJSON(raw);
+    S.results[tab] = items;
+    S.pages[tab] = 1;
+    renderResults(tab);
+  } catch(e){
+    showError(tab, e.message);
+    hideLoading(tab);
+  } finally {
+    clearInterval(ticker);
+    S.loading[tab] = false;
+    const btn = document.getElementById(`${tab}-run-btn`);
+    if(btn){ btn.disabled=false; btn.innerHTML='⟳ Fetch';}
+  }
+}
+
+/* ═══════════════════════════════════════════════
+   RENDER RESULTS
+═══════════════════════════════════════════════ */
+function renderResults(tab){
+  const all   = S.results[tab];
+  const page  = S.pages[tab];
+  const start = (page-1)*PER_PAGE;
+  const items = all.slice(start, start+PER_PAGE);
+  const el    = document.getElementById(`${tab}-results`);
+
+  if(!el) return;
+  if(!all.length){ el.innerHTML = `<div class="empty"><div class="empty-icon">🔍</div><div class="empty-text">No results yet. Hit ⟳ Fetch to search.</div></div>`; renderPagination(tab); return; }
+
+  let html = '<div class="results-grid">';
+  items.forEach((item,i)=>{ html += renderCard(tab, item, i); });
+  html += '</div>';
+  el.innerHTML = html;
+  renderPagination(tab);
+}
+
+function renderCard(tab, item, i){
+  const colors = {trends:'#00e5ff',packages:'#76ff03',courses:'#ff6d00',articles:'#e040fb',jobs:'#ffeb3b'};
+  const accent = colors[tab];
+  const delay  = `animation-delay:${i*0.06}s`;
+
+  if(tab === 'packages') return renderPackageCard(item, accent, delay);
+  if(tab === 'courses')  return renderCourseCard(item, accent, delay);
+  if(tab === 'jobs')     return renderJobCard(item, delay);
+
+  // Generic card (trends, articles)
+  const typeColor = {MODEL:'#00e5ff',REPO:'#76ff03',FRAMEWORK:'#ff6d00',PAPER:'#e040fb',NEWS:'#ffeb3b',TOOL:'#00e5ff',BLOG:'#ff9060',SURVEY:'#b39ddb',TUTORIAL:'#80cbc4',POLICY:'#ffcc02'}[item.type||'NEWS']||accent;
+  return `<div class="result-card" style="${delay}">
+    <div class="card-accent" style="background:${accent}"></div>
+    <span class="card-type" style="color:${typeColor};border-color:${typeColor}40">${item.type||'ITEM'}</span>
+    ${item.hot?`<span class="card-badge">🔥 HOT</span>`:''}
+    <div class="card-title">${esc(item.title||'Untitled')}</div>
+    <div class="card-body">${esc(item.summary||item.body||'')}</div>
+    <div class="card-tags">${(item.tags||[]).map(t=>`<span class="card-tag">${esc(t)}</span>`).join('')}</div>
+    <div class="card-footer">
+      <span class="card-source">${esc(item.source||item.category||'')} ${item.date?'· '+esc(item.date):''}</span>
+      ${item.url?`<a class="card-link" href="${esc(item.url)}" target="_blank" rel="noopener">↗ Open</a>`:''}
+    </div>
+  </div>`;
+}
+
+function renderPackageCard(item, accent, delay){
+  return `<div class="result-card" style="${delay}">
+    <div class="card-accent" style="background:${accent}"></div>
+    <span class="card-type" style="color:${accent};border-color:${accent}40">${esc(item.category||'PKG')}</span>
+    <div class="card-title">${esc(item.name||'Package')} <span style="font-weight:400;font-size:13px;color:var(--muted)">${esc(item.version||'')}</span></div>
+    <div class="pkg-install">
+      <span>${esc(item.install||'pip install '+item.name)}</span>
+      <button class="copy-btn" onclick="copyText('${esc(item.install||'')}',this)" title="Copy">⎘</button>
+    </div>
+    <div class="card-body">${esc(item.summary||'')}</div>
+    <div class="card-tags">${(item.tags||[]).map(t=>`<span class="card-tag">${esc(t)}</span>`).join('')}</div>
+    <div class="card-footer">
+      ${item.stars?`<span class="stars-badge">★ ${esc(item.stars)}</span>`:'<span></span>'}
+      ${item.url?`<a class="card-link" href="${esc(item.url)}" target="_blank" rel="noopener">↗ Open</a>`:''}
+    </div>
+  </div>`;
+}
+
+function renderCourseCard(item, accent, delay){
+  const isFree = (item.price||'').toLowerCase().includes('free');
+  return `<div class="result-card" style="${delay}">
+    <div class="card-accent" style="background:${accent}"></div>
+    <div class="course-platform">${esc(item.platform||'')} ${item.instructor?'· '+esc(item.instructor):''}</div>
+    <div class="card-title">${esc(item.title||'Course')}</div>
+    <div class="course-meta">
+      ${item.level?`<span class="course-meta-item">${esc(item.level)}</span>`:''}
+      ${item.duration?`<span class="course-meta-item">⏱ ${esc(item.duration)}</span>`:''}
+      ${item.rating?`<span class="course-meta-item">★ ${esc(item.rating)}</span>`:''}
+      ${item.enrolled?`<span class="course-meta-item">👤 ${esc(item.enrolled)}</span>`:''}
+      ${item.price?`<span class="course-price ${isFree?'free':'paid'}">${esc(item.price)}</span>`:''}
+    </div>
+    <div class="card-body">${esc(item.summary||'')}</div>
+    <div class="card-tags">${(item.tags||[]).map(t=>`<span class="card-tag">${esc(t)}</span>`).join('')}</div>
+    <div class="card-footer">
+      <span class="card-source">${esc(item.category||'')}</span>
+      ${item.url?`<a class="card-link" href="${esc(item.url)}" target="_blank" rel="noopener">↗ Enroll</a>`:''}
+    </div>
+  </div>`;
+}
+
+function renderJobCard(item, delay){
+  const initials = (item.company||'?').split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
+  const bgColors  = ['#1a1a2e','#0d1b2a','#1a0d2e','#0d2a0d','#2a1a0d'];
+  const bg = bgColors[initials.charCodeAt(0)%bgColors.length];
+  return `<div class="result-card" style="${delay}">
+    <div class="card-accent" style="background:var(--c-jobs)"></div>
+    <div class="job-header">
+      <div class="job-company-badge" style="background:${bg}">${initials}</div>
+      <div class="job-info">
+        <div class="job-title">${esc(item.title||'AI Role')}</div>
+        <div class="job-company">${esc(item.company||'')}</div>
+        <div class="job-meta">
+          ${item.location?`<span class="job-meta-item">📍 ${esc(item.location)}</span>`:''}
+          ${item.level?`<span class="job-meta-item">${esc(item.level)}</span>`:''}
+          ${item.type?`<span class="job-meta-item">${esc(item.type)}</span>`:''}
+          ${item.salary?`<span class="job-meta-item">💰 ${esc(item.salary)}</span>`:''}
+          ${item.posted?`<span class="job-meta-item">🗓 ${esc(item.posted)}</span>`:''}
+        </div>
+      </div>
+    </div>
+    <div class="card-body">${esc(item.summary||'')}</div>
+    ${item.skills?.length?`<div class="card-tags">${item.skills.map(s=>`<span class="card-tag">${esc(s)}</span>`).join('')}</div>`:''}
+    ${item.requirements?`<div class="card-source" style="margin-bottom:8px;font-size:11px;line-height:1.5;color:var(--muted)">📋 ${esc(item.requirements)}</div>`:''}
+    <button class="job-apply" onclick="${item.url?`window.open('${item.url.replace(/'/g,"\\'")}','_blank')`:'alert(\"Search on LinkedIn: \"+decodeURIComponent(\''+encodeURIComponent(item.title+' '+item.company+' India')+'\'))'}"}>
+      Apply / View Job ↗
+    </button>
+  </div>`;
+}
+
+/* ═══════════════════════════════════════════════
+   PAGINATION
+═══════════════════════════════════════════════ */
+function renderPagination(tab){
+  const el    = document.getElementById(`${tab}-pagination`);
+  if(!el) return;
+  const total = Math.ceil(S.results[tab].length / PER_PAGE);
+  if(total<=1){ el.innerHTML=''; return; }
+  const cur = S.pages[tab];
+
+  let html = `<div class="pagination">
+    <button class="page-btn" ${cur===1?'disabled':''} onclick="goPage('${tab}',${cur-1})">‹</button>`;
+  for(let p=1;p<=total;p++){
+    if(total>7 && p>2 && p<total-1 && Math.abs(p-cur)>1){ if(p===3||p===total-2) html+=`<span class="page-info">…</span>`; continue; }
+    html+=`<button class="page-btn ${p===cur?'active-page':''}" onclick="goPage('${tab}',${p})">${p}</button>`;
+  }
+  html+=`<button class="page-btn" ${cur===total?'disabled':''} onclick="goPage('${tab}',${cur+1})">›</button>
+    <span class="page-info">${cur}/${total}</span></div>`;
+  el.innerHTML = html;
+}
+
+function goPage(tab, p){
+  S.pages[tab] = p;
+  renderResults(tab);
+  document.getElementById('content').scrollTop = 0;
+}
+
+/* ═══════════════════════════════════════════════
+   LOADING / ERROR UI
+═══════════════════════════════════════════════ */
+function showLoading(tab){
+  const btn = document.getElementById(`${tab}-run-btn`);
+  if(btn){ btn.disabled=true; btn.innerHTML=`<div style="width:14px;height:14px;border:2px solid rgba(0,0,0,.3);border-top-color:#000;border-radius:50%;animation:spin .7s linear infinite"></div>`; }
+  document.getElementById(`${tab}-results`).innerHTML =
+    `<div class="loading-wrap"><div class="spinner"></div><div class="loading-status" id="${tab}-loading-status">${STATUS_MSGS[tab][0]}</div></div>`;
+  document.getElementById(`${tab}-pagination`).innerHTML='';
+}
+
+function hideLoading(tab){
+  document.getElementById(`${tab}-results`).innerHTML='';
+  const btn = document.getElementById(`${tab}-run-btn`);
+  if(btn){ btn.disabled=false; btn.innerHTML='⟳ Fetch'; }
+}
+
+function showError(tab, msg){
+  document.getElementById(`${tab}-error`).innerHTML=`<div class="error-box">⚠ ${esc(msg)}</div>`;
+  document.getElementById(`${tab}-results`).innerHTML='';
+}
+
+function clearError(tab){
+  document.getElementById(`${tab}-error`).innerHTML='';
+}
+
+/* ═══════════════════════════════════════════════
+   UTILS
+═══════════════════════════════════════════════ */
+function esc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+function copyText(text, btn){
+  navigator.clipboard.writeText(text).then(()=>{
+    const orig = btn.innerHTML; btn.innerHTML='✓';
+    setTimeout(()=>btn.innerHTML=orig, 1500);
+  }).catch(()=>{});
+}
+
+/* ═══════════════════════════════════════════════
+   BOOT
+═══════════════════════════════════════════════ */
+init();
 </script>
 </body>
 </html>
